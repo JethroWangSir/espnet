@@ -13,7 +13,7 @@ set -o pipefail
 # llama3: --hugging_face_model_name_or_path "meta-llama/Llama-3.1-8B"
 hugging_face_model_name_or_path="meta-llama/Llama-3.2-1B"
 
-train_set="train_clean_100"
+train_set="train_960"
 valid_set="dev"
 test_sets="test_clean test_other dev_clean dev_other"
 
@@ -30,7 +30,7 @@ for i in `find dump/* -iname "text"`; do
 done
 
 ./asr.sh \
-    --stage 10 \
+    --stage 1 \
     --lang en \
     --ngpu 1 \
     --nj 16 \
@@ -48,5 +48,5 @@ done
     --train_set "${train_set}" \
     --valid_set "${valid_set}" \
     --test_sets "${test_sets}" \
-    --lm_train_text "data/${train_set}/text" \
+    --lm_train_text "data/${train_set}/text data/local/other_text/text" \
     --bpe_train_text "data/${train_set}/text" "$@"
