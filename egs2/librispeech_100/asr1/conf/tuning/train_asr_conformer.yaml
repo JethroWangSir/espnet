@@ -1,19 +1,3 @@
-batch_type: numel
-batch_bins: 64000000
-accum_grad: 2
-max_epoch: 50
-patience: none
-init: none
-best_model_criterion:
--   - valid
-    - acc
-    - max
-keep_nbest_models: 10
-
-use_amp: true
-num_att_plot: 0
-num_workers: 4
-
 encoder: conformer
 encoder_conf:
     output_size: 256
@@ -47,14 +31,33 @@ model_conf:
     ctc_weight: 0.3
     lsm_weight: 0.1
     length_normalized_loss: false
-    sym_blank: "<unk>" #
-    sym_sos: "<s>" #
-    sym_eos: "</s>" #
 
 frontend_conf:
     n_fft: 512
     win_length: 400
     hop_length: 160
+
+seed: 2022
+log_interval: 400
+num_att_plot: 0
+num_workers: 4
+sort_in_batch: descending       # how to sort data in making batch
+sort_batch: descending          # how to sort created batches
+batch_type: numel
+batch_bins: 64000000
+accum_grad: 2
+max_epoch: 50
+patience: none
+init: none
+best_model_criterion:
+-   - valid
+    - acc
+    - max
+keep_nbest_models: 10
+
+use_amp: true
+cudnn_deterministic: false
+cudnn_benchmark: false
 
 optim: adam
 optim_conf:
@@ -63,8 +66,6 @@ optim_conf:
 scheduler: warmuplr
 scheduler_conf:
     warmup_steps: 25000
-
-num_att_plot: 0
 
 specaug: specaug
 specaug_conf:

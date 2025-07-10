@@ -30,7 +30,7 @@ for i in `find dump/* -iname "text"`; do
 done
 
 ./asr.sh \
-    --stage 1 \
+    --stage 10 \
     --lang en \
     --ngpu 1 \
     --nj 16 \

@@ -9,8 +9,12 @@ set -u
 set -o pipefail
 
 # Required
-# llama2: --hugging_face_model_name_or_path "meta-llama/Llama-2-7b-hf"
-# llama3: --hugging_face_model_name_or_path "meta-llama/Llama-3.1-8B"
+# Llama2: --hugging_face_model_name_or_path "meta-llama/Llama-2-7b-hf"
+# Llama3.1: --hugging_face_model_name_or_path "meta-llama/Llama-3.1-8B"
+# Llama3.2: --hugging_face_model_name_or_path "meta-llama/Llama-3.2-1B"
+# SmolLM-135M: --hugging_face_model_name_or_path "HuggingFaceTB/SmolLM2-135M"
+# SmolLM-360M: --hugging_face_model_name_or_path "HuggingFaceTB/SmolLM2-360M"
+# SmolLM-1.7B: --hugging_face_model_name_or_path "HuggingFaceTB/SmolLM2-1.7B"
 hugging_face_model_name_or_path="meta-llama/Llama-3.2-1B"
 
 train_set="train_clean_100"

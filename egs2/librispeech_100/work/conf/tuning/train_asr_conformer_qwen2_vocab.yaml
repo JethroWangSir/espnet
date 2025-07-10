@@ -1,6 +1,8 @@
 batch_type: numel
+# batch_bins: 64000000
 batch_bins: 32000000
-accum_grad: 2
+# accum_grad: 2
+accum_grad: 4
 max_epoch: 50
 patience: none
 init: none
@@ -12,13 +14,7 @@ keep_nbest_models: 10
 
 use_amp: true
 num_att_plot: 0
-
-model: llm_guided_asr
-model_conf:
-    lsm_weight: 0.1
-    length_normalized_loss: false
-    is_encoder_eval: false
-    is_llm_eval: true
+num_workers: 4
 
 encoder: conformer
 encoder_conf:
@@ -39,7 +35,7 @@ encoder_conf:
     use_cnn_module: true
     cnn_module_kernel: 31
 
-decoder: llm_guided_transformer_decoder
+decoder: transformer
 decoder_conf:
     attention_heads: 4
     linear_units: 2048
@@ -49,27 +45,18 @@ decoder_conf:
     self_attention_dropout_rate: 0.1
     src_attention_dropout_rate: 0.1
 
-llm: llama
-llm_conf:
-    model_name_or_path: "meta-llama/Llama-2-7b-chat-hf"
-    template_prompt: "[INST] <<SYS>>\nYou will be provided with a statement in quotes. Correct the wrong words and provide your revised version.\n<</SYS>>\n\nCorrect \"((HYP))\" [/INST] Here's the corrected version:\n\n"
-    dtype: "bfloat16"
-    cache_dir: "/share/homes/jethrowang/.cache/huggingface"
-    pad_token: "<unk>"
-    # 量化開關
-    load_in_8bit: true
-    device_map: "auto"
+model_conf:
+    ctc_weight: 0.3
+    lsm_weight: 0.1
+    length_normalized_loss: false
+    sym_blank: "<unk>" #
+    sym_sos: "<s>" #
+    sym_eos: "</s>" #
 
-init_param: [
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:encoder:encoder",
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:ctc:ctc",
-]
-
-freeze_param: [
-    "encoder",
-    "ctc",
-    "decoder.llm.lm",
-]
+frontend_conf:
+    n_fft: 512
+    win_length: 400
+    hop_length: 160
 
 optim: adam
 optim_conf:
@@ -78,6 +65,8 @@ optim_conf:
 scheduler: warmuplr
 scheduler_conf:
     warmup_steps: 25000
+
+num_att_plot: 0
 
 specaug: specaug
 specaug_conf:
@@ -94,4 +83,7 @@ specaug_conf:
     - 0.
     - 0.05
     num_time_mask: 5
-    
+
+use_wandb: true           
+wandb_project: llm_asr      
+wandb_name: librispeech_100_baseline_qwen2
