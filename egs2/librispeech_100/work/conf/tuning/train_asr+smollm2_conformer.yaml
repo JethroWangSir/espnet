@@ -49,20 +49,20 @@ decoder_conf:
     self_attention_dropout_rate: 0.1
     src_attention_dropout_rate: 0.1
 
-llm: llama
+llm: smollm
 llm_conf:
-    model_name_or_path: "meta-llama/Llama-2-7b-chat-hf"
-    template_prompt: "[INST] <<SYS>>\nPlease correct the CTC transcription. If biasing words are provided, treat them as references and include them only when they reasonably fit the context.\n<</SYS>>\n\nCorrect \"((HYP))\"  Biasing words (if any): \"((BIAS))\" [/INST] Here's the corrected sentence:\n\n"
+    model_name_or_path: "HuggingFaceTB/SmolLM2-135M"
+    template_prompt: "[INST] <<SYS>>\nYou will be provided with a statement in quotes. Correct the wrong words and provide your revised version.\n<</SYS>>\n\nCorrect \"((HYP))\" [/INST] Here's the corrected version:\n\n"
     dtype: "bfloat16"
-    cache_dir: "/share/homes/jerryyang/.cache/huggingface"
+    cache_dir: "/share/homes/jethrowang/.cache/huggingface"
     pad_token: "<unk>"
     # 量化開關
     load_in_8bit: true
     device_map: "auto"
 
 init_param: [
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:encoder:encoder",
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:ctc:ctc",
+    "exp/asr_train_asr_conformer_smollm2_vocab_raw_en_hugging_face_HuggingFaceTB-SmolLM2-135M_sp/valid.acc.ave_10best.pth:encoder:encoder",
+    "exp/asr_train_asr_conformer_smollm2_vocab_raw_en_hugging_face_HuggingFaceTB-SmolLM2-135M_sp/valid.acc.ave_10best.pth:ctc:ctc",
 ]
 
 freeze_param: [
@@ -94,7 +94,4 @@ specaug_conf:
     - 0.
     - 0.05
     num_time_mask: 5
-
-use_wandb: true
-wandb_project: llm_asr
-wandb_name: librispeech_100_contextual_basing_v2
+    

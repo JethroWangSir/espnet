@@ -51,7 +51,7 @@ decoder_conf:
 
 llm: llama
 llm_conf:
-    model_name_or_path: "meta-llama/Llama-2-7b-chat-hf"
+    model_name_or_path: "meta-llama/Llama-3.2-1B"
     template_prompt: "[INST] <<SYS>>\nYou will be provided with a statement in quotes. Correct the wrong words and provide your revised version.\n<</SYS>>\n\nCorrect \"((HYP))\" [/INST] Here's the corrected version:\n\n"
     dtype: "bfloat16"
     cache_dir: "/share/homes/jethrowang/.cache/huggingface"
@@ -61,8 +61,8 @@ llm_conf:
     device_map: "auto"
 
 init_param: [
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:encoder:encoder",
-    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-2-7b-hf_sp/valid.acc.ave_10best.pth:ctc:ctc",
+    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-3.2-1B_sp/valid.acc.ave_10best.pth:encoder:encoder",
+    "exp/asr_train_asr_conformer_llama2_vocab_raw_en_hugging_face_meta-llama-Llama-3.2-1B_sp/valid.acc.ave_10best.pth:ctc:ctc",
 ]
 
 freeze_param: [
