@@ -18,7 +18,7 @@ from espnet2.asr.llm.abs_llm import AbsLLM
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
-class SmolLM(AbsLLM):
+class Llama(AbsLLM):
     @typechecked
     def __init__(
         self,
@@ -26,68 +26,33 @@ class SmolLM(AbsLLM):
         template_prompt: Optional[str] = None,
         dtype: str = "bfloat16",
         cache_dir: str = None,
-        pad_token: str = "<|endoftext|>",  # SmolLM uses <|endoftext|> as pad token
+        pad_token: str = "<unk>",
     ):
         super().__init__()
 
-        # Updated to support SmolLM model variants
         assert model_name_or_path in [
-            "HuggingFaceTB/SmolLM-135M",
-            "HuggingFaceTB/SmolLM-360M", 
-            "HuggingFaceTB/SmolLM-1.7B",
-            "HuggingFaceTB/SmolLM-135M-Instruct",
-            "HuggingFaceTB/SmolLM-360M-Instruct",
-            "HuggingFaceTB/SmolLM-1.7B-Instruct",
-            "HuggingFaceTB/SmolLM2-135M",
-            "HuggingFaceTB/SmolLM2-360M",
-            "HuggingFaceTB/SmolLM2-1.7B",
-            "HuggingFaceTB/SmolLM2-135M-Instruct",
-            "HuggingFaceTB/SmolLM2-360M-Instruct",
-            "HuggingFaceTB/SmolLM2-1.7B-Instruct"
+            "meta-llama/Llama-2-7b-hf", "meta-llama/Llama-2-7b-chat-hf",
+            "meta-llama/Llama-3.1-8B", "meta-llama/Llama-3.1-8B-Instruct",
+            "meta-llama/Llama-3.2-1B", "meta-llama/Llama-3.2-1B-Instruct",
+            "meta-llama/Llama-3.2-3B", "meta-llama/Llama-3.2-3B-Instruct"
         ]
-        
-        # Check if it's an instruct model
-        self.is_instruct = "Instruct" in model_name_or_path
-        self.is_smollm2 = "SmolLM2" in model_name_or_path
+        self.is_llama2 = "Llama-2" in model_name_or_path
 
         logging.info(f"model_name_or_path: {model_name_or_path}")
         logging.info(f"dtype: {dtype}")
         logging.info(f"cache_dir: {cache_dir}")
-        logging.info(f"is_instruct: {self.is_instruct}")
-        logging.info(f"is_smollm2: {self.is_smollm2}")
-
-        # Convert dtype string to torch dtype
-        if dtype == "bfloat16":
-            torch_dtype = torch.bfloat16
-        elif dtype == "float16":
-            torch_dtype = torch.float16
-        elif dtype == "float32":
-            torch_dtype = torch.float32
-        else:
-            torch_dtype = torch.bfloat16
 
         self.lm = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path, 
-            cache_dir=cache_dir, 
-            torch_dtype=torch_dtype,
-            trust_remote_code=True  # May be needed for some SmolLM variants
+            model_name_or_path, cache_dir=cache_dir, torch_dtype=dtype
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name_or_path,
-            trust_remote_code=True
-        )
-        
-        # Set pad token if not already set
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
         self.template_prompt = template_prompt
         if template_prompt:
             assert "\"((HYP))\"" in template_prompt
 
             template_prompt_tokens = self.tokenizer.tokenize(template_prompt)
-            len_hyp_indicator = 4  # SmolLM typically uses 4 tokens for ((HYP))
-            
+            len_hyp_indicator = 5 if self.is_llama2 else 4
             for i in range(len(template_prompt_tokens)):
                 if "".join(template_prompt_tokens[i: i + len_hyp_indicator]) == "((HYP))":
                     self.template_prefix_tokens = template_prompt_tokens[:i]
@@ -95,40 +60,39 @@ class SmolLM(AbsLLM):
                     break
 
             self.template_prefix_ids = (
-                [self.tokenizer.bos_token_id] if self.tokenizer.bos_token_id is not None else []
-            ) + self.tokenizer.convert_tokens_to_ids(self.template_prefix_tokens)
-            
+                [self.lm.config.bos_token_id]
+                + self.tokenizer.convert_tokens_to_ids(self.template_prefix_tokens)
+            )
             self.template_suffix_ids = self.tokenizer.convert_tokens_to_ids(self.template_suffix_tokens)
 
-            # SmolLM token configuration
-            if self.is_instruct:
-                # For instruct models, might use special tokens
-                self.start_of_response_token_id = self.tokenizer.bos_token_id or 1
-                self.end_of_response_token_id = self.tokenizer.eos_token_id or 2
+            if self.is_llama2:
+                self.start_of_response_token_id = 29908 # "
+                self.end_of_response_token_id = 29908 # "
             else:
-                # For base models
-                self.start_of_response_token_id = self.tokenizer.bos_token_id or 1
-                self.end_of_response_token_id = self.tokenizer.eos_token_id or 2
+                # llama3
+                self.start_of_response_token_id = 1 # "
+                self.end_of_response_token_id = 1 # "
 
             logging.info(f"template_prompt: \n---\n{self.template_prompt}((RESPONSE))\n---")
             logging.info(f"template_prefix_ids: {self.template_prefix_ids}")
             logging.info(f"template_suffix_ids: {self.template_suffix_ids}")
         else:
-            self.start_of_response_token_id = self.tokenizer.bos_token_id or 1
-            self.end_of_response_token_id = self.tokenizer.eos_token_id or 2
+            self.start_of_response_token_id = self.lm.config.bos_token_id
 
-        # Handle pad token
-        if pad_token in self.tokenizer.vocab:
-            self.pad_token_id = self.tokenizer.vocab[pad_token]
-        else:
-            self.pad_token_id = self.tokenizer.pad_token_id or self.tokenizer.eos_token_id
+            if self.is_llama2:
+                self.end_of_response_token_id = self.lm.config.eos_token_id
+            else:
+                # llama3 has several eos tokens
+                self.end_of_response_token_id = self.lm.config.eos_token_id[0]
+
+        self.pad_token_id = self.tokenizer.vocab[pad_token]
 
         logging.info(f"start_of_response_token_id: {self.start_of_response_token_id}")
-        logging.info(f"start_of_response_token: {self.tokenizer.convert_ids_to_tokens([self.start_of_response_token_id])}")
+        logging.info(f"start_of_response_token: {self.tokenizer.convert_ids_to_tokens(self.start_of_response_token_id)}")
         logging.info(f"end_of_response_token_id: {self.end_of_response_token_id}")
-        logging.info(f"end_of_response_token: {self.tokenizer.convert_ids_to_tokens([self.end_of_response_token_id])}")
+        logging.info(f"end_of_response_token: {self.tokenizer.convert_ids_to_tokens(self.end_of_response_token_id)}")
         logging.info(f"pad_token_id: {self.pad_token_id}")
-        logging.info(f"pad_token: {self.tokenizer.convert_ids_to_tokens([self.pad_token_id])}")
+        logging.info(f"pad_token: {self.tokenizer.convert_ids_to_tokens(self.pad_token_id)}")
 
     def prepare_prompt(
         self,
@@ -148,11 +112,9 @@ class SmolLM(AbsLLM):
                 lm_in = []
                 lm_in_lengths = []
                 for i, hyp in enumerate(hyp_in):
-                    hyp_encoding = self.tokenizer(
-                        hyp, return_tensors="pt", add_special_tokens=False
-                    )
-                    hyp_ids = hyp_encoding.input_ids[0].to(res_in_pad.device)
-                    
+                    hyp_ids = self.tokenizer(
+                        hyp, return_tensors="pt"
+                    ).input_ids[0][1:].to(res_in_pad.device) # remove sos
                     lm_in.append(
                         torch.cat(
                             [
@@ -243,10 +205,9 @@ class SmolLM(AbsLLM):
             ).repeat(len(hyp_in), 1)
 
             if isinstance(hyp_in[0], str):
-                hyp_encoding = self.tokenizer(
-                    hyp_in[0], return_tensors="pt", add_special_tokens=False
-                )
-                hyp_id = hyp_encoding.input_ids[0].to(res_in_pad.device)
+                hyp_id = self.tokenizer(
+                    hyp_in[0], return_tensors="pt"
+                ).input_ids[0][1:].to(res_in_pad.device) # remove sos
                 hyp_ids = hyp_id.repeat(len(hyp_in), 1)
             else:
                 hyp_ids = torch.stack(hyp_in)
@@ -256,9 +217,9 @@ class SmolLM(AbsLLM):
                 dim=-1,
             )
             lm_in_lengths = (
-                prefix_ids.size(-1)
-                + hyp_ids.size(-1)
-                + suffix_ids.size(-1)
+                prefix_ids.size(0)
+                + hyp_in_lengths
+                + suffix_ids.size(0)
                 + res_in_lengths
             )
 
@@ -348,20 +309,17 @@ class SmolLM(AbsLLM):
 
         args = {
             "input_ids": lm_in,
+            # "attention_mask": mask,
             "past_key_values": cache,
             "use_cache": True,
             "output_hidden_states": not log_softmax,
             "return_dict": True,
+            "cache_position": cache_position,
         }
-        
-        # Add cache_position only if the model supports it
-        try:
-            output = self.lm(**args, cache_position=cache_position)
-        except TypeError:
-            # Fallback for models that don't support cache_position
-            del args["cache_position"] if "cache_position" in args else None
-            output = self.lm(**args)
 
+        output = self.lm(**args)
+
+        # (32 ,2, (batch, head, len, dim))
         past_key_values = output.past_key_values
         if cache is None:
             self.prefix_cache = past_key_values

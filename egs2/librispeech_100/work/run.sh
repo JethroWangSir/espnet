@@ -8,12 +8,17 @@ set -e
 set -u
 set -o pipefail
 
+# Llama
 # hugging_face_model_name_or_path="meta-llama/Llama-2-7b-hf"
 # hugging_face_model_name_or_path="meta-llama/Llama-3.1-8B"
 # hugging_face_model_name_or_path="meta-llama/Llama-3.2-1B"
+
+# SmolLM
 hugging_face_model_name_or_path="HuggingFaceTB/SmolLM2-135M"
 # hugging_face_model_name_or_path="HuggingFaceTB/SmolLM2-360M"
 # hugging_face_model_name_or_path="HuggingFaceTB/SmolLM2-1.7B"
+
+# Qwen
 # hugging_face_model_name_or_path="Qwen/Qwen2-0.5B"
 
 train_set="train_clean_100"
@@ -39,7 +44,7 @@ for i in `find dump/* -iname "text"`; do
 done
 
 ./asr.sh \
-    --stage 5 \
+    --stage 10 \
     --lang en \
     --ngpu 1 \
     --nj 16 \
