@@ -59,6 +59,8 @@ from espnet2.asr.frontend.whisper import WhisperFrontend
 from espnet2.asr.frontend.windowing import SlidingWindow
 from espnet2.asr.llm.abs_llm import AbsLLM
 from espnet2.asr.llm.llama import Llama
+from espnet2.asr.llm.qwen import Qwen
+from espnet2.asr.llm.smollm import SmolLM
 from espnet2.asr.llm_guided_asr_model import LLMGuidedASRModel
 from espnet2.asr.maskctc_model import MaskCTCModel
 from espnet2.asr.pit_espnet_model import ESPnetASRModel as PITESPnetModel
@@ -202,6 +204,8 @@ llm_choices = ClassChoices(
     name="llm",
     classes=dict(
         llama=Llama,
+        qwen=Qwen,
+        smollm=SmolLM,
       ),
     type_check=AbsLLM,
     default=None,

@@ -56,9 +56,6 @@ llm_conf:
     dtype: "bfloat16"
     cache_dir: "/share/homes/jethrowang/.cache/huggingface"
     pad_token: "<unk>"
-    # 量化開關
-    load_in_8bit: true
-    device_map: "auto"
 
 init_param: [
     "exp/asr_train_asr_conformer_smollm2_vocab_raw_en_hugging_face_HuggingFaceTB-SmolLM2-135M_sp/valid.acc.ave_10best.pth:encoder:encoder",

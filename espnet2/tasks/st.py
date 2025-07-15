@@ -51,6 +51,8 @@ from espnet2.asr.frontend.s3prl import S3prlFrontend
 from espnet2.asr.frontend.windowing import SlidingWindow
 from espnet2.asr.llm.abs_llm import AbsLLM
 from espnet2.asr.llm.llama import Llama
+from espnet2.asr.llm.qwen import Qwen
+from espnet2.asr.llm.smollm import SmolLM
 from espnet2.asr.postencoder.abs_postencoder import AbsPostEncoder
 from espnet2.asr.postencoder.hugging_face_transformers_postencoder import (
     HuggingFaceTransformersPostEncoder,
@@ -191,6 +193,8 @@ llm_choices = ClassChoices(
     name="llm",
     classes=dict(
         llama=Llama,
+        qwen=Qwen,
+        smollm=SmolLM,
       ),
     type_check=AbsLLM,
     default=None,

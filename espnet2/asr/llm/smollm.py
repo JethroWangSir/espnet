@@ -359,7 +359,8 @@ class SmolLM(AbsLLM):
             output = self.lm(**args, cache_position=cache_position)
         except TypeError:
             # Fallback for models that don't support cache_position
-            del args["cache_position"] if "cache_position" in args else None
+            if "cache_position" in args:
+                del args["cache_position"]
             output = self.lm(**args)
 
         past_key_values = output.past_key_values
